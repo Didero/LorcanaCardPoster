@@ -23,8 +23,8 @@ class MastodonPoster(Poster):
 
 
 class _MultipartRequestBuilder:
-	_LINE_SEPARATOR = "\r\n".encode("utf-8")
-	_EMPTY_LINE = "".encode("utf-8")
+	_LINE_SEPARATOR = b"\r\n"
+	_EMPTY_LINE = b""
 
 	def __init__(self, partBoundary: str):
 		self._partBoundary = f"--{partBoundary}".encode("utf-8")
@@ -49,4 +49,4 @@ class _MultipartRequestBuilder:
 
 	def getResult(self) -> bytes:
 		# Last boundary needs two dashes after the end to indicate it's the last boundary, and a newline at the end
-		return self._LINE_SEPARATOR.join(self._lines) + "--\r\n".encode("utf-8")
+		return self._LINE_SEPARATOR.join(self._lines) + "--".encode("utf-8") + self._LINE_SEPARATOR
