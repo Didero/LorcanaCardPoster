@@ -37,7 +37,7 @@ def _update():
 		json.dump(cardstore, cardstoreFile)
 	rebuildSchedule(cardstore)
 
-def rebuildSchedule(cardstore=None):
+def rebuildSchedule(cardstore=None) -> list[int]:
 	Globals.logger.info("Building schedule")
 	if not cardstore:
 		with open(_CARDSTORE_FILEPATH, "r", encoding="utf8") as cardstoreFile:
@@ -51,15 +51,17 @@ def rebuildSchedule(cardstore=None):
 	random.shuffle(cardIds)
 	with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
 		json.dump(cardIds, scheduleFile)
+	return cardIds
 
 def buildNextPostData() -> PostData | None:
 	if not os.path.isfile(_CARDSTORE_FILEPATH):
 		updateIfNecessary()
-	if not os.path.isfile(_SCHEDULE_FILEPATH):
-		rebuildSchedule()
+	if os.path.isfile(_SCHEDULE_FILEPATH):
+		with open(_SCHEDULE_FILEPATH, "r") as scheduleFile:
+			schedule: list[int] = json.load(scheduleFile)
+	else:
+		schedule = rebuildSchedule()
 	# Load next card ID from the schedule
-	with open(_SCHEDULE_FILEPATH, "r") as scheduleFile:
-		schedule: list[int] = json.load(scheduleFile)
 	cardId = schedule.pop(0)
 	Globals.logger.info(f"Building post data for card ID {cardId}")
 	# Find the card data
