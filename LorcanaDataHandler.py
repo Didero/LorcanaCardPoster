@@ -44,12 +44,12 @@ def rebuildSchedule(cardstore=None) -> dict[str, int | list[int]]:
 	if not cardstore:
 		with open(_CARDSTORE_FILEPATH, "r", encoding="utf8") as cardstoreFile:
 			cardstore = json.load(cardstoreFile)
-	cardIds: list[int] = [c["id"] for c in cardstore["cards"]]
 	if os.path.isfile(_HISTORY_FILEPATH):
 		with open(_HISTORY_FILEPATH) as historyFile:
 			history: list[int] = json.load(historyFile)
-		for cardId in history:
-			cardIds.remove(cardId)
+	else:
+		history = []
+	cardIds: list[int] = [c["id"] for c in cardstore["cards"] if c["id"] not in history]
 	random.shuffle(cardIds)
 	schedule = {"version": _SCHEDULE_FORMAT_VERSION, "cardIds": cardIds}
 	with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
