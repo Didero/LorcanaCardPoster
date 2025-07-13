@@ -9,6 +9,8 @@ _CARDSTORE_FILEPATH = os.path.join(_DATA_PATH, "cardstore.json")
 _HISTORY_FILEPATH = os.path.join(_DATA_PATH, "postHistory.json")
 _SCHEDULE_FILEPATH = os.path.join(_DATA_PATH, "postSchedule.json")
 
+_SCHEDULE_FORMAT_VERSION = 1
+
 def updateIfNecessary(forceUpdate: bool = False):
 	if forceUpdate:
 		Globals.logger.info("Update forced, updating")
@@ -37,7 +39,7 @@ def _update():
 		json.dump(cardstore, cardstoreFile)
 	rebuildSchedule(cardstore)
 
-def rebuildSchedule(cardstore=None) -> list[int]:
+def rebuildSchedule(cardstore=None) -> dict[str, int | list[int]]:
 	Globals.logger.info("Building schedule")
 	if not cardstore:
 		with open(_CARDSTORE_FILEPATH, "r", encoding="utf8") as cardstoreFile:
@@ -49,20 +51,24 @@ def rebuildSchedule(cardstore=None) -> list[int]:
 		for cardId in history:
 			cardIds.remove(cardId)
 	random.shuffle(cardIds)
+	schedule = {"version": _SCHEDULE_FORMAT_VERSION, "cardIds": cardIds}
 	with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
-		json.dump(cardIds, scheduleFile)
-	return cardIds
+		json.dump(schedule, scheduleFile)
+	return schedule
 
 def buildNextPostData() -> PostData | None:
 	if not os.path.isfile(_CARDSTORE_FILEPATH):
 		updateIfNecessary()
 	if os.path.isfile(_SCHEDULE_FILEPATH):
 		with open(_SCHEDULE_FILEPATH, "r") as scheduleFile:
-			schedule: list[int] = json.load(scheduleFile)
+			schedule: dict[str, int | list[int]] = json.load(scheduleFile)
 	else:
 		schedule = rebuildSchedule()
+	if "version" not in schedule or schedule["version"] != _SCHEDULE_FORMAT_VERSION:
+		Globals.logger.info("Schedule version mismatch")
+		schedule = rebuildSchedule()
 	# Load next card ID from the schedule
-	cardId = schedule.pop(0)
+	cardId: int = schedule["cardIds"].pop(0)
 	Globals.logger.info(f"Building post data for card ID {cardId}")
 	# Find the card data
 	with open(_CARDSTORE_FILEPATH, "r", encoding="utf8") as cardstoreFile:
