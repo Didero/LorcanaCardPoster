@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	#Log everything to a file. Use a new file each time the program is launched
 	if not os.path.isdir("logs"):
 		os.mkdir("logs")
-	logfilePath = os.path.join(Globals.basepath, "logs", "LorcanaJSON.log")
+	logfilePath = os.path.join(Globals.basepath, "logs", "LorcanaCardPoster.log")
 	loggingFileHandler = RotatingFileHandler(logfilePath, mode="w", backupCount=10, encoding="utf-8", delay=True)
 	loggingFileHandler.setLevel(logging.DEBUG)
 	loggingFileHandler.setFormatter(loggingFormatter)
