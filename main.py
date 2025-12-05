@@ -4,19 +4,41 @@ from logging.handlers import RotatingFileHandler
 import Globals, LorcanaDataHandler
 from posters.BlueskyPoster import BlueskyPoster
 from posters.MastodonPoster import MastodonPoster
+from posters.Poster import Poster
+
+MAX_POST_RETRIES: int = 10
+SECONDS_BETWEEN_RETRIES: float = 5
 
 
-def post():
+def post(*posters: Poster) -> bool:
 	postData = LorcanaDataHandler.buildNextPostData()
+	postedSuccessfully = False
 	if postData:
-		try:
-			MastodonPoster().post(postData)
-		except Exception as e:
-			Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
-		try:
-			BlueskyPoster().post(postData)
-		except Exception as e:
-			Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
+		postersAndSuccesses: dict[Poster, bool] = {poster: False for poster in posters}
+		postAttempts = 0
+		while not postedSuccessfully and postAttempts < MAX_POST_RETRIES:
+			if postAttempts != 0:
+				# Not our first attempt, wait a little while before trying again
+				time.sleep(SECONDS_BETWEEN_RETRIES)
+			postedSuccessfully = True
+			postAttempts += 1
+			for poster in posters:
+				if postersAndSuccesses[poster]:
+					# We already posted here, skip this poster
+					postedSuccessfully &= True
+					continue
+				try:
+					poster.post(postData)
+					postedSuccessfully &= True
+					postersAndSuccesses[poster] = True
+				except Exception as e:
+					Globals.logger.error(f"Exception {type(e).__name__!r} occurred in Poster {type(poster).__name__} while posting about card ID {postData.cardId}: {e}")
+					postedSuccessfully = False
+
+		else:
+			if not postedSuccessfully and postAttempts >= MAX_POST_RETRIES:
+				Globals.logger.error(f"Posting kept failing after {MAX_POST_RETRIES} attempts, aborting")
+	return postedSuccessfully
 
 
 if __name__ == "__main__":
@@ -45,7 +67,7 @@ if __name__ == "__main__":
 		sys.exit("ERROR: No argument passed, please pass one of 'update', 'forceupdate', 'post'")
 	argument = sys.argv[1].lower()
 	if argument == "post":
-		post()
+		post(MastodonPoster(), BlueskyPoster())
 	elif argument == "update" or argument == "forceupdate":
 		LorcanaDataHandler.updateIfNecessary(argument == "forceupdate")
 	elif argument == "rebuildschedule":
