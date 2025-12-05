@@ -44,12 +44,12 @@ if __name__ == "__main__":
 	if len(sys.argv) <= 1:
 		sys.exit("ERROR: No argument passed, please pass one of 'update', 'forceupdate', 'post'")
 	argument = sys.argv[1].lower()
-	if argument == "update" or argument == "forceupdate":
+	if argument == "post":
+		post()
+	elif argument == "update" or argument == "forceupdate":
 		LorcanaDataHandler.updateIfNecessary(argument == "forceupdate")
 	elif argument == "rebuildschedule":
 		LorcanaDataHandler.rebuildSchedule()
-	elif argument == "post":
-		post()
 	else:
 		Globals.logger.error(f"Unknown argument {argument!r}")
 	Globals.logger.info(f"Finished after {time.perf_counter() - startTime:.4f} seconds")
