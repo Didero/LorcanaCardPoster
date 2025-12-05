@@ -5,6 +5,20 @@ import Globals, LorcanaDataHandler
 from posters.BlueskyPoster import BlueskyPoster
 from posters.MastodonPoster import MastodonPoster
 
+
+def post():
+	postData = LorcanaDataHandler.buildNextPostData()
+	if postData:
+		try:
+			MastodonPoster().post(postData)
+		except Exception as e:
+			Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
+		try:
+			BlueskyPoster().post(postData)
+		except Exception as e:
+			Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
+
+
 if __name__ == "__main__":
 	startTime = time.perf_counter()
 	# First set up logging
@@ -35,16 +49,7 @@ if __name__ == "__main__":
 	elif argument == "rebuildschedule":
 		LorcanaDataHandler.rebuildSchedule()
 	elif argument == "post":
-		postData = LorcanaDataHandler.buildNextPostData()
-		if postData:
-			try:
-				MastodonPoster().post(postData)
-			except Exception as e:
-				Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
-			try:
-				BlueskyPoster().post(postData)
-			except Exception as e:
-				Globals.logger.error(f"Exception {type(e).__name__!r} occurred while posting about card ID {postData.cardId} to Mastodon: {e}")
+		post()
 	else:
 		Globals.logger.error(f"Unknown argument {argument!r}")
 	Globals.logger.info(f"Finished after {time.perf_counter() - startTime:.4f} seconds")
