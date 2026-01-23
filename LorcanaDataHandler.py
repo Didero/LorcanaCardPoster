@@ -9,7 +9,7 @@ _CARDSTORE_FILEPATH = os.path.join(_DATA_PATH, "cardstore.json")
 _HISTORY_FILEPATH = os.path.join(_DATA_PATH, "postHistory.json")
 _SCHEDULE_FILEPATH = os.path.join(_DATA_PATH, "postSchedule.json")
 
-_SCHEDULE_FORMAT_VERSION = 2
+_SCHEDULE_FORMAT_VERSION = 3
 _CARD_IDS_TO_SKIP: tuple[int, ...] = (1179, 1935)  # Skip the prize cards from the two "Illumineer's Quest" games, to not spoil those
 
 def updateIfNecessary(forceUpdate: bool = False):
@@ -50,7 +50,8 @@ def rebuildSchedule(cardstore=None) -> dict[str, int | list[int]]:
 			history: list[int] = json.load(historyFile)
 	else:
 		history = []
-	cardIds: list[int] = [c["id"] for c in cardstore["cards"] if c["id"] not in history and c["id"] not in _CARD_IDS_TO_SKIP]
+	incompleteSetCodes: list[str] = [setcode for setcode, setdata in cardstore["sets"].items() if not setdata["hasAllCards"]]
+	cardIds: list[int] = [c["id"] for c in cardstore["cards"] if c["id"] not in history and c["id"] not in _CARD_IDS_TO_SKIP and c["setCode"] not in incompleteSetCodes]
 	random.shuffle(cardIds)
 	schedule = {"version": _SCHEDULE_FORMAT_VERSION, "cardIds": cardIds}
 	with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
