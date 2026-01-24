@@ -79,7 +79,7 @@ def buildNextPostData() -> PostData | None:
 		if card['id'] == cardId:
 			Globals.logger.info(f"Downloading image from '{card['images']['full']}'")
 			try:
-				with urllib.request.urlopen(urllib.request.Request(card['images']['full'], headers={"User-Agent": "Lorcana/2024.4", "x-unity-version": "2022.3.44f1"})) as imageConnection:
+				with urllib.request.urlopen(urllib.request.Request(card['images']['full'], headers={"User-Agent": "Lorcana/2026.1", "x-unity-version": "6000.0.58f2"})) as imageConnection:
 					imageBytes = imageConnection.read()
 			except urllib.error.HTTPError as e:
 				Globals.logger.error(f"Error while downloading image {card['images']['full']} for card ID {cardId}: {e}")
