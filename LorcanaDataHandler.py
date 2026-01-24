@@ -1,4 +1,4 @@
-import io, json, os, random, urllib.request, zipfile
+import io, json, os, random, urllib.error, urllib.request, zipfile
 
 import Globals
 from PostData import PostData
@@ -78,8 +78,12 @@ def buildNextPostData() -> PostData | None:
 	for card in cardstore['cards']:
 		if card['id'] == cardId:
 			Globals.logger.info(f"Downloading image from '{card['images']['full']}'")
-			with urllib.request.urlopen(urllib.request.Request(card['images']['full'], headers={"User-Agent": "Lorcana/2024.4", "x-unity-version": "2022.3.44f1"})) as imageConnection:
-				imageBytes = imageConnection.read()
+			try:
+				with urllib.request.urlopen(urllib.request.Request(card['images']['full'], headers={"User-Agent": "Lorcana/2024.4", "x-unity-version": "2022.3.44f1"})) as imageConnection:
+					imageBytes = imageConnection.read()
+			except urllib.error.HTTPError as e:
+				Globals.logger.error(f"Error while downloading image {card['images']['full']} for card ID {cardId}: {e}")
+				return None
 			setData = cardstore['sets'][card['setCode']]
 			postText = f"{card['fullName']}\nStory: {card['story']}\nFrom set {card['setCode']} \"{setData['name']}\", released on {setData['releaseDate']}"
 			postData = PostData(cardId, postText, imageBytes, _getCardDescription(card))
