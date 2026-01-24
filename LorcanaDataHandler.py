@@ -58,7 +58,7 @@ def rebuildSchedule(cardstore=None) -> dict[str, int | list[int]]:
 		json.dump(schedule, scheduleFile)
 	return schedule
 
-def buildNextPostData() -> PostData | None:
+def buildNextPostData(attempts: int = 1) -> PostData | None:
 	if not os.path.isfile(_CARDSTORE_FILEPATH):
 		updateIfNecessary()
 	if os.path.isfile(_SCHEDULE_FILEPATH):
@@ -82,8 +82,16 @@ def buildNextPostData() -> PostData | None:
 				with urllib.request.urlopen(urllib.request.Request(card['images']['full'], headers={"User-Agent": "Lorcana/2026.1", "x-unity-version": "6000.0.58f2"})) as imageConnection:
 					imageBytes = imageConnection.read()
 			except urllib.error.HTTPError as e:
-				Globals.logger.error(f"Error while downloading image {card['images']['full']} for card ID {cardId}: {e}")
-				return None
+				Globals.logger.error(f"Error on attempt {attempts} while downloading image {card['images']['full']} for card ID {cardId}: {e}")
+				if attempts <= 5:
+					# Skip to the next card in the schedule, but try the current card on a later post attempt
+					schedule["cardIds"].append(cardId)
+					with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
+						json.dump(schedule, scheduleFile)
+					return buildNextPostData(attempts + 1)
+				else:
+					Globals.logger.error(f"Aborting building post data after {attempts} attempts")
+					return None
 			setData = cardstore['sets'][card['setCode']]
 			postText = f"{card['fullName']}\nStory: {card['story']}\nFrom set {card['setCode']} \"{setData['name']}\", released on {setData['releaseDate']}"
 			postData = PostData(cardId, postText, imageBytes, _getCardDescription(card))
