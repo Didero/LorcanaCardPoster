@@ -1,4 +1,4 @@
-import io, json, os, random, urllib.error, urllib.request, zipfile
+import datetime, io, json, os, random, urllib.error, urllib.request, zipfile
 
 import Globals
 from PostData import PostData
@@ -9,7 +9,7 @@ _CARDSTORE_FILEPATH = os.path.join(_DATA_PATH, "cardstore.json")
 _HISTORY_FILEPATH = os.path.join(_DATA_PATH, "postHistory.json")
 _SCHEDULE_FILEPATH = os.path.join(_DATA_PATH, "postSchedule.json")
 
-_SCHEDULE_FORMAT_VERSION = 3
+_SCHEDULE_FORMAT_VERSION = 4
 _CARD_IDS_TO_SKIP: tuple[int, ...] = (1179, 1935)  # Skip the prize cards from the two "Illumineer's Quest" games, to not spoil those
 
 def updateIfNecessary(forceUpdate: bool = False):
@@ -50,8 +50,10 @@ def rebuildSchedule(cardstore=None) -> dict[str, int | list[int]]:
 			history: list[int] = json.load(historyFile)
 	else:
 		history = []
-	incompleteSetCodes: list[str] = [setcode for setcode, setdata in cardstore["sets"].items() if not setdata["hasAllCards"]]
-	cardIds: list[int] = [c["id"] for c in cardstore["cards"] if c["id"] not in history and c["id"] not in _CARD_IDS_TO_SKIP and c["setCode"] not in incompleteSetCodes]
+	# Skip sets that have no release date or one in the future, so we only show cards that are already released, without spoiling future releases
+	today = datetime.datetime.today().strftime("%Y-%m-%d")
+	setCodesToSkip: list[str] = [setcode for setcode, setdata in cardstore["sets"].items() if not setdata["releaseDate"] or setdata["releaseDate"] > today]
+	cardIds: list[int] = [c["id"] for c in cardstore["cards"] if c["id"] not in history and c["id"] not in _CARD_IDS_TO_SKIP and c["setCode"] not in setCodesToSkip]
 	random.shuffle(cardIds)
 	schedule = {"version": _SCHEDULE_FORMAT_VERSION, "cardIds": cardIds}
 	with open(_SCHEDULE_FILEPATH, "w") as scheduleFile:
