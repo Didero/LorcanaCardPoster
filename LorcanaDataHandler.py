@@ -9,8 +9,8 @@ _CARDSTORE_FILEPATH = os.path.join(_DATA_PATH, "cardstore.json")
 _HISTORY_FILEPATH = os.path.join(_DATA_PATH, "postHistory.json")
 _SCHEDULE_FILEPATH = os.path.join(_DATA_PATH, "postSchedule.json")
 
-_SCHEDULE_FORMAT_VERSION = 4
-_CARD_IDS_TO_SKIP: tuple[int, ...] = (1179, 1935)  # Skip the prize cards from the two "Illumineer's Quest" games, to not spoil those
+_SCHEDULE_FORMAT_VERSION = 5
+_CARD_IDS_TO_SKIP: tuple[int, ...] = (1179, 1935, 3574, 3575)  # Skip the prize cards from the "Illumineer's Quest" games, to not spoil those
 
 def updateIfNecessary(forceUpdate: bool = False):
 	if forceUpdate:
